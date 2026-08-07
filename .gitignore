@@ -1,0 +1,10 @@
+# 依赖目录（体积大且可由 package.json 还原）
+node_modules/
+
+# 压缩包（源码直接放仓库，不放压缩档）
+*.zip
+*.rar
+
+# 系统文件
+Thumbs.db
+.DS_Store

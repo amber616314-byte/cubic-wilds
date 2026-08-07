@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>方块世界 — Web 版 Minecraft</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; overflow: hidden; background: #000;
+    font-family: "Segoe UI", "Microsoft YaHei", sans-serif; user-select: none; }
+  #game { position: fixed; inset: 0; }
+  #game canvas { display: block; }
+  #hud { position: fixed; inset: 0; pointer-events: none; z-index: 10; }
+
+  /* ---------- 菜单 ---------- */
+  .overlay { position: fixed; inset: 0; z-index: 20; display: flex;
+    flex-direction: column; align-items: center; justify-content: center;
+    background: linear-gradient(180deg, rgba(80,120,200,0.55), rgba(40,60,110,0.75));
+    backdrop-filter: blur(2px); }
+  .overlay.hidden { display: none; }
+
+  .title { font-size: 64px; font-weight: 900; color: #fff; text-shadow:
+    3px 3px 0 #3a3a3a, 6px 6px 0 rgba(0,0,0,0.35), 0 0 24px rgba(120,180,255,0.6);
+    letter-spacing: 2px; margin-bottom: 6px; }
+  .subtitle { color: #d8e8ff; font-size: 16px; margin-bottom: 24px; text-shadow: 1px 1px 2px #000; }
+
+  .panel { background: rgba(18,22,30,0.88); border: 3px solid #fff; box-shadow:
+    0 0 0 3px #2a2a2a, 0 12px 40px rgba(0,0,0,0.5); padding: 26px 34px;
+    min-width: 420px; max-width: 560px; }
+  .panel h2 { color: #fff; font-size: 22px; text-align: center; margin-bottom: 18px;
+    text-shadow: 2px 2px 0 #3a3a3a; }
+
+  .row { display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 12px; color: #dfe8f5; font-size: 14px; gap: 10px; }
+  .row input[type="text"] { flex: 1; padding: 6px 8px; border: 2px solid #777;
+    background: #111; color: #fff; font-size: 13px; outline: none; min-width: 0; }
+  .row input[type="range"] { flex: 1; accent-color: #6ab04c; }
+  .row select { flex: 1; padding: 5px; background: #111; color: #fff; border: 2px solid #777; }
+  .row label.chk { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+  .row .val { min-width: 34px; text-align: right; color: #9fd0ff; font-weight: bold; }
+
+  .hint { color: #9fb4d8; font-size: 12px; line-height: 1.7; margin: 10px 0 16px;
+    border-left: 3px solid #6ab04c; padding-left: 10px; }
+  .hint b { color: #d8e8ff; }
+
+  .btn { display: block; width: 100%; padding: 10px 0; margin-bottom: 10px;
+    background: #6f6f6f; border: 3px solid #fff; box-shadow: inset 0 0 0 2px #3a3a3a;
+    color: #fff; font-size: 17px; font-weight: bold; cursor: pointer; text-shadow: 2px 2px 0 #3a3a3a;
+    transition: background 0.1s; }
+  .btn:hover { background: #7f9fd0; }
+  .btn.primary { background: #4f8f4f; }
+  .btn.primary:hover { background: #5fa85f; }
+
+  /* ---------- 物品栏 ---------- */
+  #inv-screen { position: fixed; inset: 0; z-index: 15; display: none;
+    align-items: center; justify-content: center; background: rgba(0,0,0,0.55); }
+  #inv-screen.open { display: flex; }
+  #inv-box { background: rgba(30,34,42,0.95); border: 3px solid #fff;
+    box-shadow: 0 0 0 3px #2a2a2a; padding: 18px; width: 680px; max-width: 92vw; }
+  #inv-box h2 { color: #fff; text-align: center; margin-bottom: 12px; font-size: 18px; text-shadow: 2px 2px 0 #3a3a3a; }
+  #inv-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; }
+  .inv-cell { display: flex; flex-direction: column; align-items: center; gap: 4px;
+    background: #4a4a4a; border: 2px solid #8a8a8a; padding: 6px 4px; cursor: pointer;
+    color: #fff; font-size: 11px; text-align: center; }
+  .inv-cell:hover { background: #5a6a8a; }
+  .inv-cell.inv-selected { border-color: #fff; background: #4f6f4f; }
+  .inv-icon canvas { image-rendering: pixelated; width: 32px; height: 32px; }
+
+  /* ---------- F3 ---------- */
+  #debug { position: fixed; left: 8px; top: 8px; z-index: 12; color: #fff;
+    font-family: Consolas, monospace; font-size: 13px; line-height: 1.55;
+    text-shadow: 1px 1px 2px #000; background: rgba(0,0,0,0.35); padding: 8px 12px;
+    white-space: pre; display: none; pointer-events: none; }
+</style>
+</head>
+<body>
+<div id="game"></div>
+<canvas id="hud"></canvas>
+
+<!-- 标题屏 -->
+<div class="overlay" id="title-screen">
+  <div class="title">方块世界</div>
+  <div class="subtitle">Web 版 Minecraft —— 建模还原 · 手感还原</div>
+  <div class="panel">
+    <div class="row"><label>世界种子</label>
+      <input type="text" id="seed-input" placeholder="留空随机生成" spellcheck="false">
+    </div>
+    <div class="hint">
+      <b>操作</b>：WASD 移动 · 空格 跳跃 · Shift 潜行 · Ctrl 疾跑（或双击 W）<br>
+      左键 挖掘 · 右键 放置 · 1-9/滚轮 选择方块 · E 物品栏 · F3 调试信息<br>
+      创造模式：双击空格 飞行/悬停 · Esc 菜单
+    </div>
+    <div class="row"><label>灵敏度</label>
+      <input type="range" id="sens-range" min="0.1" max="2" step="0.05" value="0.35">
+      <span class="val" id="sens-value">0.35</span>
+    </div>
+    <div class="row"><label>视距</label>
+      <input type="range" id="radius-range" min="3" max="8" step="1" value="6">
+      <span class="val" id="radius-value">6</span>
+    </div>
+    <div class="row"><label>音量</label>
+      <input type="range" id="volume-range" min="0" max="1" step="0.05" value="0.5">
+      <span class="val" id="volume-value">0.5</span>
+    </div>
+    <div class="row"><label class="chk"><input type="checkbox" id="sound-check" checked> 音效</label>
+      <label class="chk"><input type="checkbox" id="cycle-check" checked> 昼夜循环</label>
+    </div>
+    <div class="row"><label class="chk"><input type="checkbox" id="light-check" checked> 精美光影</label>
+      <span class="val" style="color:#9fb4d8;font-size:11px;">阴影+光晕+色调</span>
+    </div>
+    <div class="row"><label>模式</label>
+      <select id="mode-select">
+        <option value="survival" selected>生存（挖掘需时间·掉落物）</option>
+        <option value="creative">创造（秒挖·飞行·无限方块）</option>
+      </select>
+    </div>
+    <button class="btn primary" id="btn-start">进入世界</button>
+  </div>
+</div>
+
+<!-- 暂停屏 -->
+<div class="overlay hidden" id="pause-screen">
+  <div class="title" style="font-size:40px;">游戏暂停</div>
+  <div class="panel">
+    <button class="btn primary" id="btn-resume">继续游戏</button>
+    <button class="btn" id="btn-reseed">重新生成世界</button>
+    <button class="btn" id="btn-title">返回标题</button>
+    <div class="row"><label>灵敏度</label>
+      <input type="range" id="sens-range2" min="0.1" max="2" step="0.05" value="0.35">
+      <span class="val" id="sens-value2">0.35</span>
+    </div>
+    <div class="row"><label>视距</label>
+      <input type="range" id="radius-range2" min="3" max="8" step="1" value="6">
+      <span class="val" id="radius-value2">6</span>
+    </div>
+    <div class="row"><label>音量</label>
+      <input type="range" id="volume-range2" min="0" max="1" step="0.05" value="0.5">
+      <span class="val" id="volume-value2">0.5</span>
+    </div>
+    <div class="row"><label class="chk"><input type="checkbox" id="sound-check2" checked> 音效</label>
+      <label class="chk"><input type="checkbox" id="cycle-check2" checked> 昼夜循环</label>
+    </div>
+    <div class="row"><label class="chk"><input type="checkbox" id="light-check2" checked> 精美光影</label>
+      <span class="val" style="color:#9fb4d8;font-size:11px;">阴影+光晕+色调</span>
+    </div>
+    <div class="row"><label>模式</label>
+      <select id="mode-select2">
+        <option value="survival" selected>生存（挖掘需时间·掉落物）</option>
+        <option value="creative">创造（秒挖·飞行·无限方块）</option>
+      </select>
+    </div>
+  </div>
+</div>
+
+<!-- 物品栏 -->
+<div id="inv-screen">
+  <div id="inv-box">
+    <h2>物品栏 —— 点击方块放入热栏</h2>
+    <div id="inv-grid"></div>
+  </div>
+</div>
+
+<!-- F3 调试 -->
+<div id="debug"></div>
+
+<script src="lib/three.min.js"></script>
+<script src="js/noise.js?v=9"></script>
+<script src="js/blocks.js?v=9"></script>
+<script src="js/textures_data.js?v=9"></script>
+<script src="js/textures.js?v=9"></script>
+<script src="js/world.js?v=9"></script>
+<script src="js/mesher.js?v=9"></script>
+<script src="js/physics.js?v=9"></script>
+<script src="js/player.js?v=9"></script>
+<script src="js/hand.js?v=9"></script>
+<script src="js/interaction.js?v=9"></script>
+<script src="js/environment.js?v=9"></script>
+<script src="js/postfx.js?v=9"></script>
+<script src="js/audio.js?v=9"></script>
+<script src="js/ui.js?v=9"></script>
+<script src="js/main.js?v=9"></script>
+<script>
+  // 启动
+  window.addEventListener('load', function () {
+    MC.Audio.init();
+    MC.Main.init();
+  });
+</script>
+</body>
+</html>
