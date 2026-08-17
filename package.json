@@ -1,23 +1,19 @@
 {
-  "name": "cubic-wilds",
+  "name": "voxelcraft-reborn",
   "version": "1.0.0",
-  "description": "Cubic Wilds — a browser-native voxel sandbox built with Three.js and vanilla JavaScript.",
   "private": true,
+  "description": "A browser-native voxel sandbox with procedural terrain, survival interactions, liquids, lighting and chunk streaming.",
+  "type": "module",
   "scripts": {
-    "test": "node test/run.js",
-    "test:browser": "node test/browser.js",
-    "textures": "node tools/gen_textures_data.js"
+    "start": "node tools/server.mjs",
+    "assets": "node tools/fetch-assets.mjs",
+    "test": "node tools/check.mjs"
   },
-  "keywords": [
-    "voxel",
-    "sandbox",
-    "browser-game",
-    "threejs",
-    "webgl"
-  ],
-  "license": "Apache-2.0",
+  "engines": {
+    "node": ">=20"
+  },
+  "license": "MIT",
   "dependencies": {
-    "pngjs": "^7.0.0",
-    "puppeteer-core": "^25.4.0"
+    "three": "0.160.0"
   }
 }

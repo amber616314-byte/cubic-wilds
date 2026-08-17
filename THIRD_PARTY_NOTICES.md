@@ -1,25 +1,23 @@
-# Third-Party Notices
+# Third-party notices
 
-Cubic Wilds includes or references third-party software and game assets. Those components remain subject to their own licenses and terms.
+VoxelCraft Reborn contains or can use third-party components that are not covered by the project's MIT license in the same way as original project code.
 
 ## Three.js
 
-- Project: Three.js
-- Use in this repository: local browser rendering runtime (`lib/three.min.js`)
-- License: MIT License
+Three.js revision 160 is installed through npm as the `three` package.
 
-## Minecraft-derived texture assets
+- Copyright: Three.js authors
+- License: MIT
+- It is not copied into this repository; npm installs it locally.
 
-The voxel textures in `assets/textures/` were sourced from a public GitHub mirror of Minecraft 1.18.2 assets (`InventivetalentDev/minecraft-assets`) during development.
+## Optional local reference assets
 
-These textures are **not covered by this repository's Apache-2.0 license**. Minecraft and its original assets are owned by their respective rights holders. This project is an independent learning / experimental project and is not affiliated with or endorsed by Mojang Studios or Microsoft.
+The public repository intentionally does **not** include Minecraft/Mojang/Microsoft textures, sounds, music, logos, or other proprietary game assets.
 
-If this repository is redistributed as a standalone open-source package, replacing these textures with original or clearly redistributable assets is recommended.
+For local development, `tools/fetch_assets.py` can retrieve a limited set of compatible reference assets from official Minecraft asset endpoints. Those downloaded files remain subject to their owners' terms and are not relicensed by this repository.
 
-## npm dependencies
+The repository's MIT license applies only to original project code and project-owned material unless a file states otherwise.
 
-Development dependencies such as `pngjs` and `puppeteer-core`, together with their transitive dependencies, retain the licenses declared by their respective packages.
+## Trademark / affiliation notice
 
-## Repository code
-
-Unless otherwise noted above or in individual files, original source code in this repository is licensed under the Apache License 2.0 found in `LICENSE`.
+VoxelCraft Reborn is an independent fan-made technical project. It is not affiliated with, endorsed by, sponsored by, or approved by Mojang Studios or Microsoft.
