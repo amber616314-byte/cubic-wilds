@@ -124,6 +124,7 @@ export function isLiquid(id) { const b = BLOCKS[id]; return !!b && b.liquid === 
 export function isPlant(id) { const b = BLOCKS[id]; return !!b && b.plant === true; }
 export function blockName(id) { return BLOCKS[id]?.name || '未知方块'; }
 
+
 // Basic survival drop table for the block/item set currently present in this
 // project.  Where the original game would drop an item texture we do not yet
 // ship (coal, diamond, redstone dust, snowballs, saplings, etc.), keep the ore
