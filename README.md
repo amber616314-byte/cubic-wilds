@@ -1,139 +1,156 @@
-# 方境 · Cubic Wilds
+<div align="center">
 
-> A browser-native voxel sandbox — 体素世界、探索、建造与生存，全部运行在浏览器中。
+# VoxelCraft Reborn
 
-<p align="center">
-  <img src="screenshot.png" alt="Cubic Wilds gameplay screenshot" width="900">
-</p>
+**A browser-native voxel sandbox built with JavaScript and Three.js.**
 
-<p align="center">
-  <strong>Three.js · WebGL · Procedural World · Survival / Creative · Offline Ready</strong>
-</p>
+程序化世界 · 区块流送 · 生存 / 创造 · 液体模拟 · 方块破坏 · 第一 / 第三人称
 
-## 关于项目
+</div>
 
-**方境 · Cubic Wilds** 是一个使用原生 JavaScript 与 Three.js 构建的浏览器体素沙盒游戏。项目重点不是简单绘制方块，而是尽可能实现完整的第一人称体素游戏体验：程序化世界生成、区块流式加载、碰撞与移动、挖掘与放置、掉落物、生存/创造模式、昼夜循环以及实时光影。
+---
 
-项目无需框架和构建步骤，核心运行时与游戏资源均保存在仓库中。
+## 项目简介
 
-> 本项目是独立的学习与实验性作品，与 Mojang Studios / Microsoft 无隶属关系。Minecraft 为其各自权利人的商标。
+VoxelCraft Reborn 是一个运行在浏览器中的独立体素沙盒实验项目。目标不是简单画出一片方块地形，而是把世界生成、区块网格、玩家碰撞、破坏与掉落、液体流动、光照、环境效果和第一人称交互组合成一套可以持续扩展的小游戏框架。
 
-## 亮点
+项目使用原生 JavaScript ES Modules 与 Three.js，不依赖大型前端框架。
 
-- **程序化世界**：种子化 FBM 地形、平原/森林/沙漠/雪原、多层洞穴、矿石与树木生成。
-- **区块系统**：16×16×128 区块、视距流式加载、远区块卸载、脏区块限量重建。
-- **第一人称物理**：AABB 碰撞、跳跃、疾跑、潜行、跨步与固定步长物理。
-- **挖掘与建造**：方块硬度、分阶段裂纹、粒子、掉落物、拾取与连续放置。
-- **生存 / 创造**：不同挖掘与飞行逻辑，热栏、物品栏和掉落计数。
-- **环境表现**：昼夜循环、太阳/月亮/星空、云层、动态雾、阴影、Bloom 与 ACES 色调映射。
-- **本地运行**：Three.js 与纹理本地化，可直接离线启动。
-- **自动测试基础**：逻辑测试与浏览器测试脚本已包含在仓库中。
+## 当前功能
 
-## 截图
-
-| 完整效果 | 关闭阴影 | 关闭后期效果 |
-| --- | --- | --- |
-| ![Full](x1_all.png) | ![No shadow](x2_noshadow.png) | ![No FX](x3_nofx.png) |
+- 程序化无限地形与动态区块加载 / 卸载
+- 平原、森林、白桦林、黑森林、针叶林、雪地、沙漠、热带草原、沼泽、河流、海洋、深海、沙滩、石滩、峭壁等环境
+- 洞穴、矿物、岩浆池与多种树木 / 植物生成
+- 创造模式与生存模式
+- 方块破坏阶段、裂纹、持续碎屑、最终破碎粒子与掉落物
+- 掉落物拾取与热栏同步
+- 水 / 岩浆 level、向下流动、水平扩散、流向与表面高度
+- 水与岩浆接触反应
+- 第一人称手臂与 3D 手持方块
+- 第一人称、第三人称后视、第三人称前视切换
+- 第三人称相机碰撞
+- F3 调试信息、方块选择、热栏与选项菜单
+- 天空、太阳、月亮、3D 云、雾、阴影与环境光照
+- 脚步、破坏、液体和环境音频支持（安装本地参考素材后）
+- 本地世界修改与设置保存，并兼容旧版 `mc-web` localStorage 数据
 
 ## 快速开始
 
-### 直接运行
+### 1. 环境
 
-双击 `index.html` 即可启动。
+需要：
 
-### 本地服务器
+- Node.js 20+
+- Python 3（仅用于获取本地参考素材）
+- 支持 WebGL 的现代浏览器
 
-Windows 可运行：
+### 2. 获取项目
 
-```bat
-start.bat
+```bash
+git clone <repository-url>
+cd voxelcraft-reborn
 ```
 
-也可以使用任意静态文件服务器。
+### 3. 安装依赖
+
+```bash
+npm install
+```
+
+Three.js 由 npm 管理，不再把大型第三方构建文件直接提交到仓库。
+
+### 4. 安装本地参考素材
+
+为了避免在公开仓库中重新分发第三方游戏资产，`assets/` 默认为空。
+
+```bash
+npm run assets
+```
+
+这个命令会调用 `tools/fetch_assets.py`，从官方 Minecraft 资源端点获取项目当前需要的兼容参考纹理与声音，仅保存在你的本地项目目录中。
+
+### 5. 启动
+
+```bash
+npm start
+```
+
+浏览器访问：
+
+```text
+http://127.0.0.1:8080
+```
+
+Windows 也可以在素材准备完成后双击 `start.bat`。
 
 ## 操作
 
 | 按键 | 功能 |
-| --- | --- |
-| `WASD` | 移动 |
-| `Space` | 跳跃 / 创造模式双击切换飞行 |
-| `Shift` | 潜行 |
-| `Ctrl` / 双击 `W` | 疾跑 |
+|---|---|
+| `W A S D` | 移动 |
 | 鼠标 | 视角 |
-| 左键 | 挖掘 |
-| 右键 | 放置 |
-| `1-9` / 滚轮 | 热栏选择 |
-| `E` | 物品栏 |
+| `Space` | 跳跃；创造模式双击切换飞行 |
+| `Shift` | 潜行 |
+| `Ctrl` | 疾跑 |
+| 左键 | 破坏方块 |
+| 右键 | 放置方块 |
+| 中键 | 取色 / 选取方块 |
+| `1-9` / 滚轮 | 切换热栏 |
+| `E` | 方块选择 |
 | `F3` | 调试信息 |
-| `Esc` | 暂停 |
+| `F5` | 切换视角 |
+| `G` | 切换创造 / 生存 |
+| `Esc` | 菜单 |
 
-## 技术架构
+## 项目结构
 
 ```text
-index.html          页面入口与菜单
-lib/three.min.js    Three.js r159
-js/
-  noise.js          确定性噪声与 FBM
-  blocks.js         方块定义
-  textures.js       纹理加载与 tint
-  textures_data.js  内嵌纹理数据
-  world.js          区块与地形生成
-  mesher.js         网格生成与面剔除
-  physics.js        AABB 碰撞
-  player.js         玩家控制
-  hand.js           第一人称手持物
-  interaction.js    挖掘、放置、掉落与粒子
-  environment.js    天空、昼夜、云、光照
-  postfx.js         后期效果
-  audio.js          WebAudio 音效
-  ui.js             HUD / 菜单 / 物品栏
-  main.js           主循环与输入
-assets/textures/    方块纹理
-tools/              资源处理脚本
-test/               逻辑与浏览器测试
+voxelcraft-reborn/
+├─ index.html
+├─ src/
+│  ├─ main.js            # 游戏编排、输入、主循环与场景系统
+│  ├─ world.js           # 世界、区块与程序化生成
+│  ├─ mesher.js          # 区块网格与面生成
+│  ├─ fluids.js          # 水 / 岩浆模拟
+│  ├─ player.js          # 玩家移动与碰撞
+│  ├─ particles.js       # 粒子
+│  ├─ dropped_items.js   # 掉落物
+│  ├─ hud.js             # HUD / 热栏 / 调试界面
+│  ├─ textures.js        # Atlas 与液体贴图
+│  ├─ audio.js           # 音频管理
+├─ tools/
+│  ├─ server.mjs         # 零依赖本地静态服务器
+│  ├─ check.mjs          # CI / 语法与品牌检查
+│  └─ fetch_assets.py    # 本地参考素材获取工具
+└─ assets/               # 本地生成，不提交到 Git
 ```
 
-## 开发与测试
-
-安装开发依赖：
-
-```bash
-npm ci
-```
-
-运行逻辑测试：
+## 测试
 
 ```bash
 npm test
 ```
 
-运行浏览器测试：
+当前 CI 会执行：
 
-```bash
-npm run test:browser
-```
+- 项目 JavaScript / MJS 语法检查
+- 公共页面品牌资源检查
+- Python 素材工具语法检查
 
-纹理数据重新生成：
-
-```bash
-npm run textures
-```
-
-## 已知限制
-
-- 暂无持久化存档系统。
-- 暂无生物、合成和红石类系统。
-- 液体系统仍在继续完善。
+后续计划补充世界生成确定性测试、液体传播测试、碰撞测试与存档兼容测试。
 
 ## Roadmap
 
-- [ ] 世界存档 / 读取
-- [ ] 更完整的水与岩浆流体模拟
-- [ ] 合成与工具耐久
-- [ ] 生物与基础 AI
-- [ ] 更完善的性能分级与移动端适配
-- [ ] GitHub Pages 在线试玩
+- [ ] 将地形生成迁移到 Web Worker，减少高速移动时的主线程卡顿
+- [ ] Greedy Meshing，降低大面积连续方块的顶点 / draw cost
+- [ ] IndexedDB 分区存档，替换大世界下的单体 localStorage 存档
+- [ ] 进一步拆分 `main.js`
+- [ ] 自适应阴影质量与性能预设
+- [ ] 昼夜 / 天气系统进一步完善
+- [ ] 原创可再分发材质与音频包，使公开在线 Demo 可以脱离参考素材运行
 
-## 第三方资源与许可
+## License
 
-项目代码采用 **Apache License 2.0**。第三方引擎、纹理及其他资源保留其各自许可，详见 [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md)。
+原创项目代码使用 [MIT License](LICENSE)。第三方组件和可选本地参考素材不因此自动获得 MIT 授权，详见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
+
+VoxelCraft Reborn 是独立的技术 / fan-made 项目，与 Mojang Studios 或 Microsoft 无隶属、赞助或官方认可关系。

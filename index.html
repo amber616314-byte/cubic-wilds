@@ -1,193 +1,142 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<meta http-equiv="Pragma" content="no-cache">
-<meta http-equiv="Expires" content="0">
-<title>方境 · Cubic Wilds</title>
+<meta charset="utf-8" />
+<link rel="icon" href="data:," />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<title>VoxelCraft Reborn · Browser Voxel Sandbox</title>
 <style>
+  :root { --mc-font: "Courier New", ui-monospace, monospace; }
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  html, body { width: 100%; height: 100%; overflow: hidden; background: #000;
-    font-family: "Segoe UI", "Microsoft YaHei", sans-serif; user-select: none; }
-  #game { position: fixed; inset: 0; }
-  #game canvas { display: block; }
-  #hud { position: fixed; inset: 0; pointer-events: none; z-index: 10; }
+  html, body { width: 100%; height: 100%; overflow: hidden; background: #000; }
+  body { font-family: var(--mc-font); user-select: none; -webkit-user-select: none; }
+  #game, #hud { position: fixed; inset: 0; width: 100vw; height: 100vh; display: block; }
+  #game { z-index: 1; }
+  #hud { z-index: 2; pointer-events: none; }
 
-  /* ---------- 菜单 ---------- */
-  .overlay { position: fixed; inset: 0; z-index: 20; display: flex;
+  .screen {
+    position: fixed; inset: 0; z-index: 5; display: flex;
     flex-direction: column; align-items: center; justify-content: center;
-    background: linear-gradient(180deg, rgba(80,120,200,0.55), rgba(40,60,110,0.75));
-    backdrop-filter: blur(2px); }
-  .overlay.hidden { display: none; }
+    color: #fff; text-shadow: 2px 2px 0 #3f3f3f;
+  }
+  #title-screen { background: rgba(0,0,0,0.18); }
+  #title-logo {
+    font-size: clamp(38px, 7vw, 72px);
+    font-weight: 900;
+    letter-spacing: 0.08em;
+    line-height: 0.95;
+    text-align: center;
+    color: #f2f4f7;
+    text-shadow: 0 5px 0 #23272b, 0 9px 18px rgba(0,0,0,.55);
+    animation: logo-pulse 3.2s ease-in-out infinite;
+  }
+  #title-logo span { display:block; margin-top:10px; font-size:.28em; letter-spacing:.38em; color:#b7d88a; text-shadow:0 2px 0 #253315; }
+  @keyframes logo-pulse {
+    0%,100% { transform: scale(1); } 50% { transform: scale(1.035); }
+  }
+  .mc-btn {
+    font-family: var(--mc-font); font-size: 17px; color: #fff;
+    background: linear-gradient(#8b8b8b, #6b6b6b 45%, #555 55%, #777);
+    border: 2px solid #000; outline: 2px solid #fff; padding: 9px 42px;
+    margin: 8px; cursor: pointer; text-shadow: 2px 2px 0 #3a3a3a;
+    image-rendering: pixelated;
+  }
+  .mc-btn:hover:not(:disabled) {
+    background: linear-gradient(#9f9fcf, #7c7cb8 45%, #6565a5 55%, #8989c0);
+    outline-color: #ffffa0;
+  }
+  .mc-btn:disabled { opacity: .45; cursor: default; }
+  #title-actions { margin-top: 42px; display: flex; flex-direction: column; align-items: center; }
+  #title-note { margin-top: 26px; font-size: 13px; color: #ddd; text-shadow: 1px 1px #000; text-align:center; line-height: 1.7; }
+  #loading-screen { background: #201810; }
+  #loading-bar-wrap { width: 320px; height: 18px; border: 2px solid #fff; margin-top: 18px; background:#000; }
+  #loading-bar { height: 100%; width: 0%; background:#6f6f6f; }
 
-  .title { font-size: 64px; font-weight: 900; color: #fff; text-shadow:
-    3px 3px 0 #3a3a3a, 6px 6px 0 rgba(0,0,0,0.35), 0 0 24px rgba(120,180,255,0.6);
-    letter-spacing: 2px; margin-bottom: 6px; }
-  .subtitle { color: #d8e8ff; font-size: 16px; margin-bottom: 24px; text-shadow: 1px 1px 2px #000; }
-
-  .panel { background: rgba(18,22,30,0.88); border: 3px solid #fff; box-shadow:
-    0 0 0 3px #2a2a2a, 0 12px 40px rgba(0,0,0,0.5); padding: 26px 34px;
-    min-width: 420px; max-width: 560px; }
-  .panel h2 { color: #fff; font-size: 22px; text-align: center; margin-bottom: 18px;
-    text-shadow: 2px 2px 0 #3a3a3a; }
-
-  .row { display: flex; align-items: center; justify-content: space-between;
-    margin-bottom: 12px; color: #dfe8f5; font-size: 14px; gap: 10px; }
-  .row input[type="text"] { flex: 1; padding: 6px 8px; border: 2px solid #777;
-    background: #111; color: #fff; font-size: 13px; outline: none; min-width: 0; }
-  .row input[type="range"] { flex: 1; accent-color: #6ab04c; }
-  .row select { flex: 1; padding: 5px; background: #111; color: #fff; border: 2px solid #777; }
-  .row label.chk { display: flex; align-items: center; gap: 8px; cursor: pointer; }
-  .row .val { min-width: 34px; text-align: right; color: #9fd0ff; font-weight: bold; }
-
-  .hint { color: #9fb4d8; font-size: 12px; line-height: 1.7; margin: 10px 0 16px;
-    border-left: 3px solid #6ab04c; padding-left: 10px; }
-  .hint b { color: #d8e8ff; }
-
-  .btn { display: block; width: 100%; padding: 10px 0; margin-bottom: 10px;
-    background: #6f6f6f; border: 3px solid #fff; box-shadow: inset 0 0 0 2px #3a3a3a;
-    color: #fff; font-size: 17px; font-weight: bold; cursor: pointer; text-shadow: 2px 2px 0 #3a3a3a;
-    transition: background 0.1s; }
-  .btn:hover { background: #7f9fd0; }
-  .btn.primary { background: #4f8f4f; }
-  .btn.primary:hover { background: #5fa85f; }
-
-  /* ---------- 物品栏 ---------- */
-  #inv-screen { position: fixed; inset: 0; z-index: 15; display: none;
-    align-items: center; justify-content: center; background: rgba(0,0,0,0.55); }
-  #inv-screen.open { display: flex; }
-  #inv-box { background: rgba(30,34,42,0.95); border: 3px solid #fff;
-    box-shadow: 0 0 0 3px #2a2a2a; padding: 18px; width: 680px; max-width: 92vw; }
-  #inv-box h2 { color: #fff; text-align: center; margin-bottom: 12px; font-size: 18px; text-shadow: 2px 2px 0 #3a3a3a; }
-  #inv-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; }
-  .inv-cell { display: flex; flex-direction: column; align-items: center; gap: 4px;
-    background: #4a4a4a; border: 2px solid #8a8a8a; padding: 6px 4px; cursor: pointer;
-    color: #fff; font-size: 11px; text-align: center; }
-  .inv-cell:hover { background: #5a6a8a; }
-  .inv-cell.inv-selected { border-color: #fff; background: #4f6f4f; }
-  .inv-icon canvas { image-rendering: pixelated; width: 32px; height: 32px; }
-
-  /* ---------- F3 ---------- */
-  #debug { position: fixed; left: 8px; top: 8px; z-index: 12; color: #fff;
-    font-family: Consolas, monospace; font-size: 13px; line-height: 1.55;
-    text-shadow: 1px 1px 2px #000; background: rgba(0,0,0,0.35); padding: 8px 12px;
-    white-space: pre; display: none; pointer-events: none; }
+  #pause-screen { background: rgba(0,0,0,0.42); }
+  #options-screen {
+    background-image: url('assets/textures/gui/options_background.png');
+    background-size: 32px 32px; image-rendering: pixelated;
+  }
+  .menu-panel {
+    background: #c6c6c6; color: #fff; border: 2px solid #000; outline: 3px solid #fff;
+    padding: 26px 34px; display: flex; flex-direction: column; align-items: center;
+    text-shadow: 2px 2px 0 #3f3f3f; min-width: 340px;
+  }
+  .menu-title { font-size: 30px; margin-bottom: 14px; color:#fff; }
+  #options-screen .menu-panel { background: rgba(0,0,0,0.72); }
+  .opt-row { width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 12px; margin: 7px 0; font-size: 14px; }
+  .opt-row input[type=range] { width: 170px; }
+  .small { font-size: 12px; color: #ddd; }
+  #picker-screen { background: rgba(0,0,0,0.5); }
+  #picker-panel {
+    width: min(640px, 92vw); background: #c6c6c6; border: 2px solid #000; outline: 3px solid #fff;
+    padding: 18px; display: flex; flex-wrap: wrap; gap: 4px; max-height: 78vh; overflow:auto;
+  }
+  .pick-cell {
+    width: 52px; height: 56px; border: 2px solid #5a5a5a; background: #8b8b8b;
+    display:flex; flex-direction: column; align-items:center; justify-content:center; cursor:pointer;
+  }
+  .pick-cell:hover { background:#9f9fcf; border-color:#fff; }
+  .pick-cell img, .pick-cell canvas { width: 36px; height: 36px; image-rendering: pixelated; }
+  .pick-cell span { font-size: 10px; color:#fff; text-shadow:1px 1px #000; max-width:48px; overflow:hidden; white-space:nowrap; }
+  .hidden { display: none !important; }
 </style>
+<script type="importmap">
+{
+  "imports": {
+    "three": "./node_modules/three/build/three.module.js"
+  }
+}
+</script>
 </head>
 <body>
-<div id="game"></div>
-<canvas id="hud"></canvas>
+  <canvas id="game"></canvas>
+  <canvas id="hud"></canvas>
 
-<!-- 标题屏 -->
-<div class="overlay" id="title-screen">
-  <div class="title">方境 · Cubic Wilds</div>
-  <div class="subtitle">浏览器原生体素沙盒 · 探索 · 建造 · 生存</div>
-  <div class="panel">
-    <div class="row"><label>世界种子</label>
-      <input type="text" id="seed-input" placeholder="留空随机生成" spellcheck="false">
-    </div>
-    <div class="hint">
-      <b>操作</b>：WASD 移动 · 空格 跳跃 · Shift 潜行 · Ctrl 疾跑（或双击 W）<br>
-      左键 挖掘 · 右键 放置 · 1-9/滚轮 选择方块 · E 物品栏 · F3 调试信息<br>
-      创造模式：双击空格 飞行/悬停 · Esc 菜单
-    </div>
-    <div class="row"><label>灵敏度</label>
-      <input type="range" id="sens-range" min="0.1" max="2" step="0.05" value="0.35">
-      <span class="val" id="sens-value">0.35</span>
-    </div>
-    <div class="row"><label>视距</label>
-      <input type="range" id="radius-range" min="3" max="8" step="1" value="6">
-      <span class="val" id="radius-value">6</span>
-    </div>
-    <div class="row"><label>音量</label>
-      <input type="range" id="volume-range" min="0" max="1" step="0.05" value="0.5">
-      <span class="val" id="volume-value">0.5</span>
-    </div>
-    <div class="row"><label class="chk"><input type="checkbox" id="sound-check" checked> 音效</label>
-      <label class="chk"><input type="checkbox" id="cycle-check" checked> 昼夜循环</label>
-    </div>
-    <div class="row"><label class="chk"><input type="checkbox" id="light-check" checked> 精美光影</label>
-      <span class="val" style="color:#9fb4d8;font-size:11px;">阴影+光晕+色调</span>
-    </div>
-    <div class="row"><label>模式</label>
-      <select id="mode-select">
-        <option value="survival" selected>生存（挖掘需时间·掉落物）</option>
-        <option value="creative">创造（秒挖·飞行·无限方块）</option>
-      </select>
-    </div>
-    <button class="btn primary" id="btn-start">进入世界</button>
-  </div>
-</div>
-
-<!-- 暂停屏 -->
-<div class="overlay hidden" id="pause-screen">
-  <div class="title" style="font-size:40px;">游戏暂停</div>
-  <div class="panel">
-    <button class="btn primary" id="btn-resume">继续游戏</button>
-    <button class="btn" id="btn-reseed">重新生成世界</button>
-    <button class="btn" id="btn-title">返回标题</button>
-    <div class="row"><label>灵敏度</label>
-      <input type="range" id="sens-range2" min="0.1" max="2" step="0.05" value="0.35">
-      <span class="val" id="sens-value2">0.35</span>
-    </div>
-    <div class="row"><label>视距</label>
-      <input type="range" id="radius-range2" min="3" max="8" step="1" value="6">
-      <span class="val" id="radius-value2">6</span>
-    </div>
-    <div class="row"><label>音量</label>
-      <input type="range" id="volume-range2" min="0" max="1" step="0.05" value="0.5">
-      <span class="val" id="volume-value2">0.5</span>
-    </div>
-    <div class="row"><label class="chk"><input type="checkbox" id="sound-check2" checked> 音效</label>
-      <label class="chk"><input type="checkbox" id="cycle-check2" checked> 昼夜循环</label>
-    </div>
-    <div class="row"><label class="chk"><input type="checkbox" id="light-check2" checked> 精美光影</label>
-      <span class="val" style="color:#9fb4d8;font-size:11px;">阴影+光晕+色调</span>
-    </div>
-    <div class="row"><label>模式</label>
-      <select id="mode-select2">
-        <option value="survival" selected>生存（挖掘需时间·掉落物）</option>
-        <option value="creative">创造（秒挖·飞行·无限方块）</option>
-      </select>
+  <div id="title-screen" class="screen">
+    <div id="title-logo">VOXELCRAFT<span>REBORN</span></div>
+    <div id="title-actions">
+      <button id="btn-play" class="mc-btn" disabled>正在装载资源…</button>
+      <div id="title-note">
+        W A S D 移动 · 鼠标视角 · 空格跳跃（双击=飞行）· Shift 潜行 · Ctrl 疾跑<br/>
+        左键破坏 · 右键放置 · 中键取色 · E 方块选择 · F3 调试 · F5 视角 · G 模式<br/>
+        1-9 / 滚轮 切换热栏 · ESC 菜单<br/><span style="opacity:.72">独立体素沙盒项目 · 不隶属于 Mojang 或 Microsoft</span>
+      </div>
     </div>
   </div>
-</div>
 
-<!-- 物品栏 -->
-<div id="inv-screen">
-  <div id="inv-box">
-    <h2>物品栏 —— 点击方块放入热栏</h2>
-    <div id="inv-grid"></div>
+  <div id="loading-screen" class="screen hidden">
+    <div class="menu-title">正在生成地形</div>
+    <div id="loading-bar-wrap"><div id="loading-bar"></div></div>
+    <div class="small" id="loading-text"></div>
   </div>
-</div>
 
-<!-- F3 调试 -->
-<div id="debug"></div>
+  <div id="pause-screen" class="screen hidden">
+    <div class="menu-panel">
+      <div class="menu-title">游戏菜单</div>
+      <button id="btn-resume" class="mc-btn">回到游戏</button>
+      <button id="btn-options" class="mc-btn">选项…</button>
+      <button id="btn-quit-title" class="mc-btn">保存并回到标题画面</button>
+    </div>
+  </div>
 
-<script src="lib/three.min.js"></script>
-<script src="js/noise.js?v=9"></script>
-<script src="js/blocks.js?v=9"></script>
-<script src="js/textures_data.js?v=9"></script>
-<script src="js/textures.js?v=9"></script>
-<script src="js/world.js?v=9"></script>
-<script src="js/mesher.js?v=9"></script>
-<script src="js/physics.js?v=9"></script>
-<script src="js/player.js?v=9"></script>
-<script src="js/hand.js?v=9"></script>
-<script src="js/interaction.js?v=9"></script>
-<script src="js/environment.js?v=9"></script>
-<script src="js/postfx.js?v=9"></script>
-<script src="js/audio.js?v=9"></script>
-<script src="js/ui.js?v=9"></script>
-<script src="js/main.js?v=9"></script>
-<script>
-  // 启动
-  window.addEventListener('load', function () {
-    MC.Audio.init();
-    MC.Main.init();
-  });
-</script>
+  <div id="options-screen" class="screen hidden">
+    <div class="menu-panel">
+      <div class="menu-title">选项</div>
+      <div class="opt-row"><span>渲染距离</span><input id="opt-distance" type="range" min="2" max="8" step="1" value="4" /><span id="opt-distance-v">4</span></div>
+      <div class="opt-row"><span>视野 (FOV)</span><input id="opt-fov" type="range" min="60" max="110" step="1" value="70" /><span id="opt-fov-v">70</span></div>
+      <div class="opt-row"><span>鼠标灵敏度</span><input id="opt-sens" type="range" min="30" max="180" step="5" value="100" /><span id="opt-sens-v">100%</span></div>
+      <div class="opt-row"><span>音量</span><input id="opt-vol" type="range" min="0" max="100" step="5" value="70" /><span id="opt-vol-v">70%</span></div>
+      <div class="opt-row"><span>音乐</span><input id="opt-music" type="checkbox" checked /></div>
+      <div class="opt-row"><span>创造模式</span><input id="opt-creative" type="checkbox" checked /></div>
+      <button id="btn-options-back" class="mc-btn">完成</button>
+    </div>
+  </div>
+
+  <div id="picker-screen" class="screen hidden">
+    <div id="picker-panel"></div>
+  </div>
+
+  <script type="module" src="src/main.js"></script>
 </body>
 </html>
