@@ -1,19 +1,21 @@
 {
-  "name": "mc-game",
+  "name": "cubic-wilds",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "directories": {
-    "lib": "lib",
-    "test": "test"
-  },
+  "description": "Cubic Wilds — a browser-native voxel sandbox built with Three.js and vanilla JavaScript.",
+  "private": true,
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node test/run.js",
+    "test:browser": "node test/browser.js",
+    "textures": "node tools/gen_textures_data.js"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "commonjs",
+  "keywords": [
+    "voxel",
+    "sandbox",
+    "browser-game",
+    "threejs",
+    "webgl"
+  ],
+  "license": "Apache-2.0",
   "dependencies": {
     "pngjs": "^7.0.0",
     "puppeteer-core": "^25.4.0"
